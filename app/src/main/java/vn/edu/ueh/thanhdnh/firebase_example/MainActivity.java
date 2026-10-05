@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,7 +19,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
   FirebaseFirestore db;
   Button btAdd, btShow;
-  EditText etName, etPhone;
+  EditText etTitle, etContent, etAuthor, etImageUrl;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -35,8 +36,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     db = FirebaseFirestore.getInstance();
     btAdd = findViewById(R.id.btAdd);
     btShow = findViewById(R.id.btShow);
-    etName = findViewById(R.id.etName);
-    etPhone = findViewById(R.id.etPhone);
+    etTitle = findViewById(R.id.etTitle);
+    etContent = findViewById(R.id.etContent);
+    etAuthor = findViewById(R.id.etAuthor);
+    etImageUrl = findViewById(R.id.etImageUrl);
     btAdd.setOnClickListener(this);
     btShow.setOnClickListener(this);
   }
@@ -44,12 +47,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   @Override
   public void onClick(View view) {
     if (view.getId() == R.id.btAdd) {
-      db.collection("users").add(new User(etName.getText().toString(), etPhone.getText().toString()));
-      etName.setText("");
-      etPhone.setText("");
+      String title = etTitle.getText().toString().trim();
+      if (title.isEmpty()) {
+        Toast.makeText(this, "Vui lòng nhập tiêu đề", Toast.LENGTH_SHORT).show();
+        return;
+      }
+      Article article = new Article(
+              title,
+              etContent.getText().toString().trim(),
+              etAuthor.getText().toString().trim(),
+              etImageUrl.getText().toString().trim());
+
+      db.collection("articles").add(article)
+              .addOnSuccessListener(ref ->
+                      Toast.makeText(this, "Đã lưu bài viết lên Firebase", Toast.LENGTH_SHORT).show())
+              .addOnFailureListener(e ->
+                      Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_LONG).show());
+
+      etTitle.setText("");
+      etContent.setText("");
+      etAuthor.setText("");
+      etImageUrl.setText("");
     } else if (view.getId() == R.id.btShow) {
-      Intent intent = new Intent(getBaseContext(), ShowDataActivity.class);
-      startActivity(intent);
+      startActivity(new Intent(getBaseContext(), ShowDataActivity.class));
     }
   }
 }
